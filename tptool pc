@@ -1,0 +1,170 @@
+-- ===== Teleport Tool PC by Kevyr (Press E) =====
+
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+
+local LocalPlayer = Players.LocalPlayer
+
+
+-- الإعدادات
+local TeleportDistance = 80
+local MinDistance = 10
+local MaxDistance = 300
+local Step = 1
+local CameraFollow = true
+
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TeleportGuiPC"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.Size = UDim2.new(0,160,0,95)
+Frame.Position = UDim2.new(1,-60,1,-10)
+Frame.AnchorPoint = Vector2.new(1,1)
+Frame.BackgroundColor3 = Color3.fromRGB(0,100,255)
+Frame.BackgroundTransparency = 0.4
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+
+
+local Label = Instance.new("TextLabel")
+Label.Parent = Frame
+Label.Size = UDim2.new(1,0,0.18,0)
+Label.Text = "Script by Kevyr"
+Label.BackgroundTransparency = 1
+Label.TextColor3 = Color3.fromRGB(255,255,255)
+Label.TextScaled = true
+
+
+local Info = Instance.new("TextLabel")
+Info.Parent = Frame
+Info.Size = UDim2.new(1,0,0.30,0)
+Info.Position = UDim2.new(0,0,0.18,0)
+Info.BackgroundTransparency = 1
+Info.TextColor3 = Color3.fromRGB(255,255,255)
+Info.TextScaled = true
+Info.Text = "Press E to TP"
+
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Parent = Frame
+SpeedLabel.Size = UDim2.new(1,0,0.15,0)
+SpeedLabel.Position = UDim2.new(0,0,0.5,0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.TextColor3 = Color3.fromRGB(255,255,255)
+SpeedLabel.TextScaled = true
+
+
+local function UpdateText()
+	SpeedLabel.Text = "Speed : "..TeleportDistance
+end
+UpdateText()
+
+
+local Minus = Instance.new("TextButton")
+Minus.Parent = Frame
+Minus.Size = UDim2.new(0.45,0,0.25,0)
+Minus.Position = UDim2.new(0.03,0,0.72,0)
+Minus.Text = "-"
+Minus.TextScaled = true
+Minus.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Minus.TextColor3 = Color3.fromRGB(255,255,255)
+Minus.BorderSizePixel = 0
+
+
+local Plus = Instance.new("TextButton")
+Plus.Parent = Frame
+Plus.Size = UDim2.new(0.45,0,0.25,0)
+Plus.Position = UDim2.new(0.52,0,0.72,0)
+Plus.Text = "+"
+Plus.TextScaled = true
+Plus.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Plus.TextColor3 = Color3.fromRGB(255,255,255)
+Plus.BorderSizePixel = 0
+
+
+Minus.MouseButton1Click:Connect(function()
+	TeleportDistance = math.clamp(TeleportDistance - Step, MinDistance, MaxDistance)
+	UpdateText()
+end)
+
+
+Plus.MouseButton1Click:Connect(function()
+	TeleportDistance = math.clamp(TeleportDistance + Step, MinDistance, MaxDistance)
+	UpdateText()
+end)
+
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	
+	if input.KeyCode == Enum.KeyCode.Equals then
+		TeleportDistance = math.clamp(TeleportDistance + 1, MinDistance, MaxDistance)
+		UpdateText()
+	end
+	
+	if input.KeyCode == Enum.KeyCode.Minus then
+		TeleportDistance = math.clamp(TeleportDistance - 1, MinDistance, MaxDistance)
+		UpdateText()
+	end
+end)
+
+
+-- التليبورت
+local function TeleportForward()
+local Character = LocalPlayer.Character
+if not Character then return end
+
+
+local HRP = Character:FindFirstChild("HumanoidRootPart")
+local Humanoid = Character:FindFirstChild("Humanoid")
+if not HRP or not Humanoid then return end
+local MoveDir = Humanoid.MoveDirection
+local FlatDir
+if MoveDir.Magnitude > 0 then
+	FlatDir = Vector3.new(MoveDir.X, 0, MoveDir.Z).Unit
+else
+	local LookVector = HRP.CFrame.LookVector
+	FlatDir = Vector3.new(LookVector.X, 0, LookVector.Z).Unit
+end
+local NewPosition = HRP.Position + (FlatDir * TeleportDistance)
+HRP.CFrame = CFrame.new(NewPosition, NewPosition + FlatDir)
+if CameraFollow then
+	local Camera = workspace.CurrentCamera
+	Camera.CameraSubject = Humanoid
+	Camera.CameraType = Enum.CameraType.Custom
+end
+
+
+end
+-- زر E
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	
+	if input.KeyCode == Enum.KeyCode.E then
+		TeleportForward()
+	end
+end)
+
+
+-- 🔥 تثبيت الكاميرا على الهيومانويد بدل البارت
+RunService.RenderStepped:Connect(function()
+	if CameraFollow then
+		local Character = LocalPlayer.Character
+		if Character then
+			local Humanoid = Character:FindFirstChild("Humanoid")
+			if Humanoid then
+				workspace.CurrentCamera.CameraSubject = Humanoid
+			end
+		end
+	end
+end)
